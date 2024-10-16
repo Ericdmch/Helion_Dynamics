@@ -1,6 +1,3 @@
-# Create a README.md file for the CanSat Challenge 2025 project
-
-readme_content = """
 # CanSat Challenge 2025
 
 Welcome to our repository for the **CanSat Challenge 2025**. This project aims to design, build, and launch a CanSat (a simulation of a satellite) that will collect environmental data during its descent from an altitude of approximately 1 km. The goal is to demonstrate an efficient design and provide accurate data collection for a variety of conditions.
