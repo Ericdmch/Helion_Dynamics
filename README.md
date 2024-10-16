@@ -29,7 +29,14 @@ Our CanSat will be launched from a rocket and descend via parachute, collecting 
 ## Team Members
 
 - **Eric Chen** - Electronics and Communication Lead
-- [Other team members can be listed here along with their roles]
+
+- **Emerson Yu** - Electronics and Communication Lead
+
+- **Laura Wang** - Something
+
+- **Felix Chen** - Something
+
+- **Abigail Wang** - Something
 
 ## System Architecture
 
