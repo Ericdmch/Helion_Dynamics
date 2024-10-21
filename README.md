@@ -13,7 +13,6 @@ Welcome to our repository for the **CanSat Challenge 2025**. This project aims t
 7. [Installation](#installation)
 8. [Usage](#usage)
 9. [Contributing](#contributing)
-10. [License](#license)
 
 ---
 
