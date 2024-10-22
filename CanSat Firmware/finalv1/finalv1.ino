@@ -129,5 +129,5 @@ void loop() {
   display.display();
 
   // Delay before the next reading
-  delay(2000);
+  delay(1);
 }
