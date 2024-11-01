@@ -20,7 +20,7 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 // MPU6050 setup
 MPU6050 mpu;
-bool DMPReady = false;  
+bool DMPReady = false;
 uint8_t MPUIntStatus;
 uint16_t packetSize;
 uint8_t FIFOBuffer[64];
@@ -32,6 +32,7 @@ float ypr[3];
 // GPS setup
 Adafruit_GPS GPS(&Wire);
 #define GPS_I2C_ADDR 0x10
+bool GPSAvailable = false;
 
 // Timing variables
 unsigned long lastSwitchTime = 0;
@@ -43,17 +44,26 @@ void setup() {
   Serial.begin(115200);
   while (!Serial);
 
+  // Initialize OLED
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    Serial.println(F("OLED allocation failed"));
+    while (1);
+  }
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+
   // Initialize BME680 sensor
   if (!bme.begin()) {
     Serial.println("BME680 sensor initialization failed");
-    while (1);
+    displayError("BME680 Error");
+  } else {
+    bme.setTemperatureOversampling(BME680_OS_8X);
+    bme.setHumidityOversampling(BME680_OS_2X);
+    bme.setPressureOversampling(BME680_OS_4X);
+    bme.setIIRFilterSize(BME680_FILTER_SIZE_3);
+    bme.setGasHeater(320, 150);
   }
-
-  bme.setTemperatureOversampling(BME680_OS_8X);
-  bme.setHumidityOversampling(BME680_OS_2X);
-  bme.setPressureOversampling(BME680_OS_4X);
-  bme.setIIRFilterSize(BME680_FILTER_SIZE_3);
-  bme.setGasHeater(320, 150); 
 
   // Initialize MPU6050
   mpu.initialize();
@@ -68,25 +78,19 @@ void setup() {
       Serial.print(F("DMP Initialization failed (code "));
       Serial.print(devStatus);
       Serial.println(F(")"));
+      displayError("MPU6050 Error");
     }
   } else {
     Serial.println(F("MPU6050 connection failed"));
-    while (1);
+    displayError("MPU6050 Error");
   }
-
-  // Initialize OLED
-  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
-    Serial.println(F("OLED allocation failed"));
-    while (1);
-  }
-  display.clearDisplay();
-  display.setTextSize(1);
-  display.setTextColor(SSD1306_WHITE);
 
   // Initialize GPS
-  GPS.begin(GPS_I2C_ADDR); 
+  GPS.begin(GPS_I2C_ADDR);
   GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
   GPS.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ);  // 1 Hz update rate
+  delay(1000);  // Wait for response
+  GPSAvailable = GPS.read() != 0;  // Check if any data is received
 }
 
 void loop() {
@@ -98,7 +102,11 @@ void loop() {
 
   if (displayGPS) {
     // GPS display section
-    displayGPSData();
+    if (GPSAvailable && GPS.fix) {
+      displayGPSData();
+    } else {
+      displayError("No GPS Signal");
+    }
   } else {
     // Sensor data display section (MPU6050 and BME680)
     displaySensorData();
@@ -109,7 +117,10 @@ void loop() {
 
 void displaySensorData() {
   // Check MPU6050 DMP status
-  if (!DMPReady) return;
+  if (!DMPReady) {
+    displayError("MPU6050 Not Ready");
+    return;
+  }
 
   // Read a packet from MPU6050 FIFO
   if (mpu.dmpGetCurrentFIFOPacket(FIFOBuffer)) {
@@ -120,7 +131,8 @@ void displaySensorData() {
 
   // Get BME680 readings
   if (!bme.performReading()) {
-    Serial.println("Failed to perform BME680 reading :(");
+    Serial.println("Failed to perform BME680 reading");
+    displayError("BME680 Read Fail");
     return;
   }
 
@@ -161,9 +173,17 @@ void displayGPSData() {
     display.print("Alt: "); display.print(GPS.altitude); display.println(" m");
     display.print("Sat: "); display.print((int)GPS.satellites);
   } else {
-    // If no GPS fix, display error message
-    display.print("GPS not connected");
+    displayError("No GPS Signal");
   }
 
   display.display();
+}
+
+void displayError(const char* message) {
+  display.clearDisplay();
+  display.setCursor(0, 0);
+  display.print("Error: ");
+  display.println(message);
+  display.display();
+  delay(2000);  // Hold error message on display
 }
