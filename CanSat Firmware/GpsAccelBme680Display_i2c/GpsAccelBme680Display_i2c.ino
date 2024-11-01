@@ -36,7 +36,9 @@ bool GPSAvailable = false;
 
 // Timing variables
 unsigned long lastSwitchTime = 0;
-unsigned long switchInterval = 5000;  // 5 seconds interval for screen switching
+unsigned long gpsErrorDisplayTime = 0;
+unsigned long switchInterval = 10000;  // 10 seconds interval for sensor data display
+unsigned long gpsErrorInterval = 1000; // 1 second interval for GPS error display
 bool displayGPS = false;  // Flag to toggle between GPS and sensor data display
 
 void setup() {
@@ -105,7 +107,11 @@ void loop() {
     if (GPSAvailable && GPS.fix) {
       displayGPSData();
     } else {
-      displayError("No GPS Signal");
+      if (millis() - gpsErrorDisplayTime < gpsErrorInterval) {
+        displayError("No GPS Signal");
+      } else {
+        displaySensorData();  // Switch back to sensor data if GPS error time exceeds 1 second
+      }
     }
   } else {
     // Sensor data display section (MPU6050 and BME680)
@@ -185,5 +191,5 @@ void displayError(const char* message) {
   display.print("Error: ");
   display.println(message);
   display.display();
-  delay(2000);  // Hold error message on display
+  gpsErrorDisplayTime = millis(); // Update the GPS error display time
 }
