@@ -80,3 +80,8 @@ To set up the software on your local machine:
    ```bash
    git clone https://github.com/yourteam/cansat-challenge-2025.git
    cd cansat-challenge-2025
+
+**Important Source Links**
+
+[iLabs rp2040 LoRa Mainboard Datasheet](https://ilabs.se/challenger-rp2040-lora-datasheet/)
+
