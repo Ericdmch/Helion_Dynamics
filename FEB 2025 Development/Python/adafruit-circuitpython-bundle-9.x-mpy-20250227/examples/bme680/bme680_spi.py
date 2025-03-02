@@ -2,10 +2,8 @@
 # SPDX-License-Identifier: MIT
 
 import time
-
 import board
 import digitalio
-
 import adafruit_bme680
 
 # Create sensor object, communicating over the board's default SPI bus
