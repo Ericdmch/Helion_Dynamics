@@ -1,4 +1,4 @@
-# Teensy Project - Installation and Usage Guide
+# Installation and Usage Guide (Updated)
 
 ## Software Requirements
 
@@ -15,9 +15,9 @@ Install the following libraries using the Arduino Library Manager (Sketch > Incl
 
 ### Python Setup
 1. Install Python 3.6 or newer from [python.org](https://www.python.org/downloads/)
-2. Install the required Python package using pip:
+2. Install the required Python packages using pip:
    ```
-   pip install pyserial
+   pip install pyserial openpyxl matplotlib pandas
    ```
 
 ## Hardware Setup
@@ -39,7 +39,20 @@ Refer to the `hardware_setup.md` file for detailed wiring instructions.
 4. Click the Upload button to program the Teensy 4.1
 5. After uploading, you can open the Serial Monitor (115200 baud) to verify the receiver is working
 
-### Python Logging Application
+## Usage Instructions
+
+### Teensy 4.0 Transmitter
+- Once programmed, the Teensy 4.0 will automatically start collecting sensor data and transmitting it via the LoRa module
+- The transmitter sends data every 1 second by default (this can be adjusted in the code)
+- The onboard LED will blink with each transmission
+- For portable use, you can power the Teensy 4.0 with a battery
+
+### Teensy 4.1 Receiver
+- Once programmed, the Teensy 4.1 will automatically start listening for data from the transmitter
+- When data is received, it will be forwarded to the computer via USB serial
+- The onboard LED will blink when data is received
+
+### Basic Python Logging Application
 1. Connect the Teensy 4.1 receiver to your computer via USB
 2. Open a terminal or command prompt
 3. Navigate to the directory containing `teensy_data_logger.py`
@@ -57,26 +70,61 @@ Refer to the `hardware_setup.md` file for detailed wiring instructions.
    python teensy_data_logger.py --port /dev/tty.usbmodem12345  # Mac example
    ```
 
-## Usage Instructions
+### Enhanced Python Logging Application with Excel and Graphs
+1. Connect the Teensy 4.1 receiver to your computer via USB
+2. Open a terminal or command prompt
+3. Navigate to the directory containing `teensy_data_logger_excel.py`
+4. Run the enhanced application:
+   ```
+   python teensy_data_logger_excel.py
+   ```
+5. The application accepts the same command-line arguments as the basic version:
+   ```
+   python teensy_data_logger_excel.py --list
+   python teensy_data_logger_excel.py --port COM3
+   python teensy_data_logger_excel.py --directory my_data_logs
+   ```
 
-### Teensy 4.0 Transmitter
-- Once programmed, the Teensy 4.0 will automatically start collecting sensor data and transmitting it via the LoRa module
-- The transmitter sends data every 1 second by default (this can be adjusted in the code)
-- The onboard LED will blink with each transmission
-- For portable use, you can power the Teensy 4.0 with a battery
+### Excel and Data Visualization Features
+- The enhanced logger automatically creates and updates an Excel workbook with multiple sheets:
+  - **Sensor Data**: Raw data in tabular format
+  - **Dashboard**: Summary statistics and latest readings
+  - **Environmental Graphs**: Temperature, humidity, pressure, and gas graphs
+  - **Motion Graphs**: Acceleration and gyroscope graphs
+  - **Light Graphs**: Light level graphs
+- Graphs are automatically generated and embedded in the Excel file
+- Graphs are also saved as separate PNG files in the `logs/graphs` directory
+- The Excel file is updated every 10 data points by default (configurable in the code)
 
-### Teensy 4.1 Receiver
-- Once programmed, the Teensy 4.1 will automatically start listening for data from the transmitter
-- When data is received, it will be forwarded to the computer via USB serial
-- The onboard LED will blink when data is received
+### Testing Excel Functionality
+To test the Excel functionality without actual hardware:
+1. Navigate to the directory containing `test_excel_functionality.py`
+2. Run the test script:
+   ```
+   python test_excel_functionality.py
+   ```
+3. The script will generate simulated sensor data and test the Excel and graph generation capabilities
+4. Command-line options:
+   ```
+   python test_excel_functionality.py --num-samples 50 --delay 0.5 --output-dir test_logs
+   ```
 
-### Python Logging Application
-- The application will display received data in real-time in the terminal
+## Data Output
+
+### Basic Logger
+- Data is displayed in real-time in the terminal
 - Data is automatically logged to CSV and JSON files in the `logs` directory
 - Press Ctrl+C to stop the application
 - Logged data can be found in:
   - `logs/sensor_data.csv` - CSV format for easy import into spreadsheet applications
   - `logs/sensor_data.json` - JSON format for programmatic access
+
+### Enhanced Logger
+- All features of the basic logger, plus:
+- Excel workbook with formatted data and embedded graphs:
+  - `logs/sensor_data.xlsx`
+- Graph images in PNG format:
+  - `logs/graphs/*.png`
 
 ## Troubleshooting
 
@@ -92,14 +140,15 @@ Refer to the `hardware_setup.md` file for detailed wiring instructions.
 - Ensure the USB cable is a data cable, not just a charging cable
 - Try a different USB port or cable
 
-### Sensor Reading Issues
-- Verify that all sensors are correctly wired
-- Check the I2C addresses if multiple I2C devices are used
-- Ensure the sensors are powered with the correct voltage (3.3V for most sensors)
+### Excel and Graph Issues
+- Ensure you have installed all required Python packages: `pyserial`, `openpyxl`, `matplotlib`, and `pandas`
+- Check that you have write permissions to the logs directory
+- If Excel files are not updating, try closing any open instances of the file
+- For large datasets, Excel updates may take longer; be patient during updates
 
 ### Python Application Issues
 - Verify that Python 3.6 or newer is installed
-- Check that the pyserial package is installed
+- Check that all required packages are installed
 - Ensure you have write permissions to the logs directory
 - On some systems, you may need to run the application with administrator/sudo privileges
 
