@@ -39,7 +39,7 @@ from openpyxl.drawing.image import Image
 
 # Default settings
 DEFAULT_BAUD_RATE = 115200
-DEFAULT_LOG_DIR = "logs"
+DEFAULT_LOG_DIR = str(Path.home() / "Desktop/Teensy_Data_Logs")  # Changed to Desktop
 DEFAULT_CSV_FILENAME = "sensor_data.csv"
 DEFAULT_JSON_FILENAME = "sensor_data.json"
 DEFAULT_EXCEL_FILENAME = "sensor_data.xlsx"
