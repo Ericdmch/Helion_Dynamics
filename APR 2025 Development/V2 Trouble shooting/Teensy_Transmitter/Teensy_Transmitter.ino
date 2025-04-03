@@ -125,26 +125,33 @@ void setup() {
     Serial.println("Failed to set LoRa baud rate!");
   }
   
- // Configure LoRa parameters
-if (!sendATCommand("AT+PARAMETER=10,7,1,7")) { // SF=10, BW=125kHz, CR=4/5, Preamble=7
-    Serial.println("Failed to set LoRa parameters! Using default parameters.");
-    // Fallback to default parameters
-    sendATCommand("AT+PARAMETER=9,7,1,12"); // Default parameters
-}
-  
-  // Set device address
-  if (!sendATCommand("AT+ADDRESS=1")) {
-    Serial.println("Failed to set LoRa address!");
-  }
-  
   // Set network ID
   if (!sendATCommand("AT+NETWORKID=0")) {
     Serial.println("Failed to set LoRa network ID!");
   }
   
+  // Verify network ID
+  sendATCommand("AT+NETWORKID?");
+  
+  // Set device address to 1
+  if (!sendATCommand("AT+ADDRESS=1")) {
+    Serial.println("Failed to set LoRa address!");
+  }
+  
+  // Verify address
+  sendATCommand("AT+ADDRESS?");
+  
   // Set RF output power to 15 dBm (maximum)
   if (!sendATCommand("AT+CRFOP=15")) {
     Serial.println("Failed to set LoRa RF power!");
+  }
+  
+  // Verify RF output power
+  sendATCommand("AT+CRFOP?");
+  
+  // Configure LoRa parameters (SF=10, BW=125kHz, CR=4/5, Preamble=7)
+  if (!sendATCommand("AT+PARAMETER=10,7,1,7")) {
+    Serial.println("Failed to set LoRa parameters!");
   }
   
   // Get and display the module's firmware version
@@ -155,6 +162,10 @@ if (!sendATCommand("AT+PARAMETER=10,7,1,7")) { // SF=10, BW=125kHz, CR=4/5, Prea
   sendATCommand("AT+ADDRESS?");
   sendATCommand("AT+NETWORKID?");
   sendATCommand("AT+CRFOP?");
+  
+  // Restart the module to apply changes
+  sendATCommand("AT+RESET");
+  delay(2000);
   
   Serial.println("Initialization complete");
   digitalWrite(LED_PIN, LOW);    // Turn off LED after initialization
@@ -350,7 +361,7 @@ bool sendATCommand(String command) {
   String response = "";
   bool responseReceived = false;
   
-  while (millis() - startTime < 1000 && !responseReceived) {
+  while (millis() - startTime < 2000 && !responseReceived) {
     if (loraSerial.available()) {
       response = loraSerial.readStringUntil('\n');
       response.trim();
