@@ -80,11 +80,20 @@ void setup() {
   bme.setGasHeater(320, 150); // 320*C for 150 ms
   
   // Initialize MPU6050
-  try {
+  // Modified to avoid using try-catch which isn't supported by default in Arduino
+  bool mpu_success = true;
+  
+  // Try to initialize the MPU6050
+  Wire.beginTransmission(0x68); // MPU6050 address
+  if (Wire.endTransmission() != 0) {
+    mpu_success = false;
+  }
+  
+  if (mpu_success) {
     mpu6050.begin();
     mpu6050.calcGyroOffsets(true); // Calibrate gyroscope
     Serial.println("MPU6050 sensor initialized successfully");
-  } catch (...) {
+  } else {
     Serial.println("Error initializing MPU6050 sensor, check wiring!");
     blinkLED(4, 100); // Error indicator: 4 quick blinks
   }
