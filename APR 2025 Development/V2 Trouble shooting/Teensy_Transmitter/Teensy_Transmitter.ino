@@ -125,10 +125,12 @@ void setup() {
     Serial.println("Failed to set LoRa baud rate!");
   }
   
-  // Set RF parameters (SF=10, BW=125kHz, CR=4/5, Preamble=7)
-  if (!sendATCommand("AT+PARAMETER=10,7,1,7")) {
-    Serial.println("Failed to set LoRa parameters!");
-  }
+ // Configure LoRa parameters
+if (!sendATCommand("AT+PARAMETER=10,7,1,7")) { // SF=10, BW=125kHz, CR=4/5, Preamble=7
+    Serial.println("Failed to set LoRa parameters! Using default parameters.");
+    // Fallback to default parameters
+    sendATCommand("AT+PARAMETER=9,7,1,12"); // Default parameters
+}
   
   // Set device address
   if (!sendATCommand("AT+ADDRESS=1")) {
