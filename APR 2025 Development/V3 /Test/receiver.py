@@ -17,40 +17,69 @@ def send_at_command(command):
     else:
         print("No response")
 
-# Test basic AT command
-send_at_command("AT")
+# Function to configure the module
+def configure_module():
+    # Reset to factory defaults
+    send_at_command("AT+FACTORY")
+    time.sleep(1)  # Wait for reset
 
-# Reset to factory defaults (optional)
-send_at_command("AT+FACTORY")
-time.sleep(1)  # Wait for reset
+    # Configure module parameters
+    send_at_command("AT+ADDRESS=2")       # Receiver address
+    send_at_command("AT+NETWORKID=100")   # Network ID (must match sender)
+    send_at_command("AT+MODE=0")          # Transceiver mode
+    send_at_command("AT+BAND=915000000")  # Frequency (match sender)
+    send_at_command("AT+PARAMETER=9,7,1,12")  # RF parameters (match sender)
 
-# Configure RYLR998 (Receiver Address: 2, Network ID: 100)
-send_at_command("AT+ADDRESS=2")
-send_at_command("AT+NETWORKID=100")
-send_at_command("AT+MODE=0")  # Set to transceiver mode
+# Function to parse received data
+def parse_lora_message(data):
+    try:
+        # Split the received string by commas
+        parts = data.split(",")
+
+        # Check if it's a valid LoRa message
+        if len(parts) >= 5 and parts[0].startswith("+RCV="):
+            # Extract individual components
+            address = parts[0].split("=")[1]  # Sender address
+            length = parts[1]                 # Data length
+            message = ",".join(parts[2:-2])   # Extract the message content
+            rssi = parts[-2]                  # Signal strength
+            snr = parts[-1]                   # Signal-to-noise ratio
+
+            return {
+                "address": address,
+                "length": length,
+                "message": message,
+                "rssi": rssi,
+                "snr": snr
+            }
+        return None
+    except Exception as e:
+        print("Error parsing data:", e)
+        return None
+
+# Main setup
+configure_module()
+print("Receiver configured. Waiting for messages...")
 
 # Main loop
-print("Waiting for messages...")
 while True:
-    # Read incoming data
+    # Check if there's incoming data
     if uart.in_waiting > 0:
+        # Read all available data
         data = uart.read(uart.in_waiting).decode().strip()
-        print("Received data:", data)
+        print("Raw received data:", data)
 
-        # Check if the data is a received LoRa message
-        if data.startswith("+RCV="):
-            # Parse the received data
-            parts = data.split(",")
-            if len(parts) >= 4:
-                address = parts[0].split("=")[1]  # Sender address
-                length = parts[1]  # Data length
-                message = ",".join(parts[2:-2])  # Extract the message
-                rssi = parts[-2]  # Signal strength
-                snr = parts[-1]  # Signal-to-noise ratio
+        # Parse the data
+        parsed_data = parse_lora_message(data)
 
-                print(f"Received message from address {address}:")
-                print(f"Message: {message}")
-                print(f"Length: {length} bytes")
-                print(f"RSSI: {rssi} dBm")
-                print(f"SNR: {snr}")
-                print("-" * 30)
+        if parsed_data:
+            # Print parsed information
+            print("\nParsed Message:")
+            print(f"Sender Address: {parsed_data['address']}")
+            print(f"Message Length: {parsed_data['length']} bytes")
+            print(f"Message Content: {parsed_data['message']}")
+            print(f"RSSI: {parsed_data['rssi']} dBm")
+            print(f"SNR: {parsed_data['snr']}")
+            print("-" * 30)
+        else:
+            print("Received data is not a valid LoRa message.")
