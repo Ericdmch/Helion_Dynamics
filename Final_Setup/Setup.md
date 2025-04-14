@@ -26,9 +26,15 @@ This document provides a step-by-step guide to setting up the Teensy-based senso
 3. Install the required libraries using pip:
    ```bash
    pip install pyserial matplotlib
+4. Install python libraries into teensy: [Circuitpython Libraries](https://circuitpython.org/libraries/)
+- asyncio
+- adafruit_gps
+- adafruit_bme680
+5. If there are any missing module errors,
+    ```bash
+    pip install NAME_MISSING_MODULE
 
 # Hardware Setup
-
 ## Sender Board
 - **LoRa Module Connection**:
   - TX → RX1 (pin 27)
