@@ -73,13 +73,13 @@ This document provides a step-by-step guide to setting up the Teensy-based senso
 
 ## Uploading Sender Code
 1. Open Mu Editor
-2. Copy and paste the [[BMEGPS Send.py]] into a new tab
+2. Copy and paste the [BMEGPS Send.py](/Final_Setup/BMEGPS_Send.py) into a new tab
 3. Connect the sender Teensy to your computer via USB
 4. Click the "Flash" button to upload the code to the Teensy
 
 ## Uploading Receiver Code
 1. Open a new tab in Mu Editor
-2. Copy and paste the [[BMEGPS Recieve.py]] into the new tab
+2. Copy and paste the [BMEGPS Recieve.py](/Final_Setup/BMEGPS_Recieve.py) into the new tab
 3. Connect the receiver Teensy to your computer via USB
 4. Click the "Flash" button to upload the code to the Teensy
 
