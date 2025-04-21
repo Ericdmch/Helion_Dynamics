@@ -6,70 +6,93 @@ import adafruit_bme680
 import adafruit_gps
 import adafruit_mpu6050
 import analogio
+from digitalio import DigitalInOut, Direction
 
-# Initialize I2C for sensors
-i2c = board.I2C()
 
-# Initialize BME680
+# Initialize high-speed I2C bus
+i2c = busio.I2C(board.SCL, board.SDA)
+
+# Initialize sensors
 bme680 = adafruit_bme680.Adafruit_BME680_I2C(i2c)
-bme680.sea_level_pressure = 101325  # Adjust based on your location
+bme680.sea_level_pressure = 101325
 
-# Initialize GPS
 gps = adafruit_gps.GPS_GtopI2C(i2c, debug=False)
 gps.send_command(b'PMTK314,0,1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0')
 gps.send_command(b'PMTK220,1000')
 
-# Initialize MPU6050
 mpu = adafruit_mpu6050.MPU6050(i2c)
 mpu.accelerometer_range = adafruit_mpu6050.Range.RANGE_2_G
 mpu.gyro_range = adafruit_mpu6050.GyroRange.RANGE_250_DPS
 
-# Initialize analog input on a valid analog pin (e.g., A0)
 analog_pin = analogio.AnalogIn(board.A2)
 
-# Initialize UART for communication with Pico
-uart = busio.UART(board.TX1, board.RX1, baudrate=115200)
+# Initialize UART
+uart = busio.UART(board.TX, board.RX, baudrate=115200)
+
+# Initialize onboard LED
+led = DigitalInOut(board.LED)
+led.direction = Direction.OUTPUT
+
+# GPS state variables
+last_gps_update = time.monotonic()
+latitude = None
+longitude = None
+
+led.value=True
+time.sleep(15)
+led.value=False
+
 
 def collect_and_send_data():
-    # Get timestamp rounded to the nearest tenth of a second
     timestamp = round(time.monotonic(), 1)
 
-    # Read BME680 data
+    # Sensor readings
     temperature = round(bme680.temperature, 1)
-    pressure = bme680.pressure/10  # Convert to kiloPascals
+    pressure = bme680.pressure / 10  # kPa
 
-    # Read GPS data
-    gps.update()
-    latitude = None
-    longitude = None
-    if gps.has_fix:
-        latitude = gps.latitude
-        longitude = gps.longitude
-
-    # Read MPU6050 data
     accel_x, accel_y, accel_z = mpu.acceleration
+    accel_x_rounded = round(accel_x, 1)
+    accel_y_rounded = round(accel_y, 1)
+    accel_z_rounded = round(accel_z, 1)
 
-    # Read analog data from the specified analog pin
     analog_value = analog_pin.value
 
-    # Create simplified data payload without sensor labels
+    # Create data payload
     data_point = [
         timestamp,
         temperature,
         pressure,
-        round(accel_x, 1),
-        round(accel_y, 1),
-        round(accel_z, 1),
+        accel_x_rounded,
+        accel_y_rounded,
+        accel_z_rounded,
         latitude,
         longitude,
         analog_value
     ]
 
-    # Convert data to JSON and send over serial
+    # Convert to JSON and send
     json_data = json.dumps(data_point)
     uart.write(json_data.encode('utf-8') + b'\n')
-    print("Sent data:", json_data.encode('utf-8') + b'\n')
+    print(json_data)
+    # Blink LED twice quickly
+    led.value = True
+    time.sleep(0.05)
+    led.value = False
+
 
 while True:
     collect_and_send_data()
-    time.sleep(0.3)
+
+    # Update GPS once per second
+    current_time = time.monotonic()
+    if current_time - last_gps_update >= 1.0:
+        gps.update()
+        if gps.has_fix:
+            latitude = gps.latitude
+            longitude = gps.longitude
+        else:
+            latitude = None
+            longitude = None
+        last_gps_update = current_time
+
+    time.sleep(0.1)

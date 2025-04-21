@@ -1,140 +1,173 @@
-import time  # Import the time module for time-related functions
-import board  # Import the board module for hardware definitions
-import busio  # Import the busio module for UART communication
-import json  # Import the json module for JSON data handling
-import digitalio  # Import the digitalio module for digital I/O operations
+import time
+import board
+import busio
+import json
+import digitalio
+
+# Initialize the onboard LED
+led = digitalio.DigitalInOut(board.LED)
+led.direction = digitalio.Direction.OUTPUT
 
 # Initialize UART for Teensy (GP0: TX, GP1: RX)
 teensy_uart = busio.UART(board.GP0, board.GP1, baudrate=115200)
 
-# Initialize UART for LoRa module (GP4: TX1, GP5: RX1)
-lora_uart = busio.UART(board.GP4, board.GP5, baudrate=115200)
+# Initialize UART for DX-LR02 radio (GP4: TX, GP5: RX)
+radio_uart = busio.UART(board.GP4, board.GP5, baudrate=9600)
 
-# Initialize onboard LED
-led = digitalio.DigitalInOut(board.LED)  # Create a digital I/O object for the LED
-led.direction = digitalio.Direction.OUTPUT  # Set the LED pin as an output
+current_line = []
+data_buffer = []
+packet_count = 0
+BATCH_SIZE = 2  # Number of packets to send in each batch
 
-current_line = []  # Buffer to store incoming data from Teensy line by line
-data_buffer = []   # Buffer to store received data packets
-packet_count = 0   # Counter to track the number of packets received
+# AT command sending function
+def send_at_command(cmd, expected, timeout=2.0):
+    try:
+        radio_uart.write(cmd + "\r\n")
+        response = ""
+        start_time = time.monotonic()
+        while time.monotonic() - start_time < timeout:
+            if radio_uart.in_waiting:
+                response += radio_uart.read(radio_uart.in_waiting).decode()
+            time.sleep(0.05)
+        print(f"Sent: {cmd}")
+        print(f"Received: {response.strip()}")
+        return expected in response, response.strip()
+    except Exception as e:
+        print(f"Error sending AT command: {e}")
+        return False, ""
 
-def read_teensy_data():
-    global current_line, packet_count  # Declare global variables to modify them inside the function
-    data_received = False  # Flag to indicate if data was received
-
-    # Read all available data with a timeout of 100ms
-    start_time = time.monotonic()  # Record the start time
-    while time.monotonic() - start_time < 0.1:  # Continue reading until timeout
-        if teensy_uart.in_waiting > 0:  # Check if there is data waiting in the UART buffer
-            byte = teensy_uart.read(1)  # Read one byte from the UART
-
-            if byte == b'\n':  # Check if the end of a line is reached
-                if current_line:  # If there is data in the current line buffer
-                    try:
-                        message = b''.join(current_line).decode('utf-8').strip()  # Convert bytes to string and remove whitespace
-                        # Parse the message as JSON
-                        try:
-                            parsed_data = json.loads(message)  # Attempt to parse the JSON data
-                        except:
-                            print("exception Called!")  # Print an error message if parsing fails
-                            current_line = []  # Clear the current line buffer
-                            continue  # Skip to the next iteration
-
-                        # Validate the packet structure
-                        if isinstance(parsed_data, list) and len(parsed_data) >= 9:  # Check if parsed data is a list with at least 9 elements
-                            data_buffer.append(parsed_data)  # Add the valid packet to the data buffer
-                            packet_count += 1  # Increment the packet count
-                            data_received = True  # Set the data received flag to True
-                        else:
-                            print(f"Invalid packet format, discarding: {parsed_data}")  # Print an error message for invalid packets
-
-                    except UnicodeError as e:  # Catch Unicode errors during decoding
-                        print(f"JSON Error: {e}, discarding packet: {message}")  # Print the error message
-                        current_line = []  # Clear the current line buffer
-                    finally:
-                        current_line = []  # Clear the current line buffer after processing
-            else:
-                current_line.append(byte)  # Add the received byte to the current line buffer
-
-    return data_received  # Return whether data was received
-
-def send_lora_command(command, retries=0, max_retries=3):
-    full_command = command + "\r\n"  # Format the command with a newline character
-    lora_uart.write(full_command.encode())  # Send the command over UART
-    print(f"Sent LoRa command: {command}")  # Print the sent command
-
-    response = ""  # Initialize the response variable
-    start_time = time.monotonic()  # Record the start time
-    while "OK" not in response and time.monotonic() - start_time < 2:  # Wait for a response with a timeout of 2 seconds
-        time.sleep(0.1)  # Short delay to avoid busy waiting
-        while lora_uart.in_waiting > 0:  # Read all available data from the UART buffer
-            response += lora_uart.read(lora_uart.in_waiting).decode()  # Decode and append the received data to the response
-
-    if response:  # If a response was received
-        print(f"LoRa response: {response.strip()}")  # Print the response
-        # Blink the onboard LED when receiving "+OK"
-        if "+OK" in response:  # Check if the response contains "+OK"
-            led.value = True  # Turn on the LED
-            time.sleep(0.1)  # Keep the LED on for a short duration
-            led.value = False  # Turn off the LED
-        # If the command is AT+FACTORY and ERR is in response, retry
-        elif command == "AT+FACTORY" and "ERR" in response:  # Check if the command is AT+FACTORY and response contains ERR
-            retries += 1  # Increment the retry count
-            if retries <= max_retries:  # Check if retry count is within the limit
-                print(f"Command '{command}' failed. Retrying ({retries}/{max_retries})...")  # Print retry message
-                return send_lora_command(command, retries, max_retries)  # Retry the command
-            else:
-                print(f"Command '{command}' failed after {max_retries} retries.")  # Print failure message after max retries
-        return response.strip()  # Return the stripped response
-    else:
-        print("No response from LoRa.")  # Print message if no response was received
-        return None  # Return None for no response
-
+# Configure LoRa module
 def configure_lora():
-    print("Configuring LoRa module...")  # Print configuration start message
-    send_lora_command("AT+FACTORY")  # Send AT+FACTORY command to reset to defaults
-    time.sleep(1)  # Wait for 1 second after factory reset
-    send_lora_command("AT+ADDRESS=1")    # Set the LoRa module address to 1
-    send_lora_command("AT+NETWORKID=100") # Set the network ID to 100
-    send_lora_command("AT+MODE=0")       # Set the mode to transceiver (0)
-    send_lora_command("AT+BAND=915000000") # Set the frequency band to 915MHz
-    send_lora_command("AT+PARAMETER=9,7,1,12") # Set RF parameters
-    print("LoRa configured.")  # Print configuration completion message
+    try:
+        for attempt in range(3):
+            if send_at_command("+++", "Entry AT", timeout=4.0)[0]:
+                print("Entered AT mode")
+                led.value = True
+                time.sleep(0.1)  # Keep LED on for 0.1 seconds
+                led.value = False  # Turn off the LED
+                break
+            print(f"Retry {attempt + 1}/3: Failed to enter AT mode")
+            time.sleep(1)
+        else:
+            print("Failed to enter AT mode after retries")
+            return False
+        time.sleep(2)  # Wait for module to stabilize
+        # Test baud rate and wake module
+        print("Testing module communication...")
+        if send_at_command("AT", "OK", timeout=4.0)[0]:
+            print("Module responded to AT command")
+        else:
+            print("Module did not respond to AT command. Check baud rate or wiring.")
 
-configure_lora()  # Call the function to configure the LoRa module
-print("Waiting for data from Teensy...")  # Print a message indicating readiness to receive data
+        if not send_at_command("AT+MODE0", "OK")[0]:
+            print("Failed to set transparent mode")
+        if not send_at_command("AT+LEVEL4", "OK")[0]:
+            print("Failed to set level 4")
+        if not send_at_command("AT+CHANNEL82", "OK")[0]:
+            print("Failed to set channel 82")
+        if not send_at_command("AT+RESET", "OK")[0]:
+            print("Failed to reset")
+        time.sleep(2)  # Wait for restart
+        if not send_at_command("+++", "Entry AT", timeout=2.0)[0]:
+            print("Failed to re-enter AT mode for HELP")
+        if not send_at_command("AT+HELP", "LoRa Parameter")[0]:
+            print("Failed to get configuration info")
+        led.value = True
+        time.sleep(3)  # Keep LED on for 3 seconds
+        led.value = False  # Turn off the LED
+        return True
+    except Exception as e:
+        print(f"Error configuring LoRa: {e}")
+        return False
 
-while True:  # Main loop to continuously run the program
-    data_received = read_teensy_data()  # Read data from Teensy and check if data was received
+# Read data from Teensy
+def read_teensy_data():
+    global current_line, packet_count
+    data_received = False
+    try:
+        start_time = time.monotonic()
+        while time.monotonic() - start_time < 0.1:
+            if teensy_uart.in_waiting > 0:
+                byte = teensy_uart.read(1)
 
-    if data_received:  # If data was received
+                if byte == b'\n':
+                    if current_line:
+                        try:
+                            message = b''.join(current_line).decode('utf-8').strip()
+                            try:
+                                parsed_data = json.loads(message)
+                            except:
+                                current_line = []
+                                continue
+
+                            if isinstance(parsed_data, list) and len(parsed_data) >= 9:
+                                data_buffer.append(parsed_data)
+                                packet_count += 1
+                                data_received = True
+                            else:
+                                print(f"Invalid packet format: {parsed_data}")
+
+                        except:
+                            print("Error discarding")
+                            current_line = []
+                else:
+                    current_line.append(byte)
+        return data_received
+    except Exception as e:
+        print(f"Error reading Teensy data: {e}")
+        return False
+
+# Send data via LoRa in batches
+def send_radio_data():
+    global data_buffer
+    try:
+        if len(data_buffer) < BATCH_SIZE:
+            return False  # Not enough data to form a batch
+
+        batch = data_buffer[:BATCH_SIZE]
+        data_buffer = data_buffer[BATCH_SIZE:]  # Remove the sent packets from the buffer
+
+        json_data = json.dumps(batch)
         try:
-            # Check if there are at least two packets in the buffer to combine and send
-            if len(data_buffer) >= 2:
-                combined_data = data_buffer[:2]  # Take the first two packets from the buffer
-                combined_json = json.dumps(combined_data)  # Convert the combined data to a JSON string
+            radio_uart.write(json_data.encode() + b'\n')
+        except:
+            print("send failed")
+        print(f"Sent to radio: {json_data}")
+        # Turn on the LED
+        led.value = True
+        time.sleep(0.1)  # Keep LED on for 0.1 seconds
+        led.value = False  # Turn off the LED
+        return True
+    except Exception as e:
+        print(f"Error sending radio data: {e}")
+        return False
 
-                print(f"\nCombined JSON: {combined_json}")  # Print the combined JSON data
+# Main function
+def main():
+    print("Configuring LoRa module...")
+    try:
+        if configure_lora():
+            print("LoRa module configured successfully")
+        else:
+            print("LoRa module configuration failed")
+            return  # Exit if configuration fails
 
-                # Truncate the JSON string if it exceeds the LoRa payload limit of 240 bytes
-                max_payload = 240
-                if len(combined_json) > max_payload:
-                    combined_json = combined_json[:max_payload]  # Truncate the JSON string
-                    print(f"Warning: Payload truncated to {max_payload} bytes")  # Print a warning message
+        print("Waiting for data from Teensy...")
 
-                # Send the combined JSON data via LoRa
-                data_length = len(combined_json)  # Get the length of the JSON data
-                send_command = f"AT+SEND=2,{data_length},{combined_json}"  # Format the send command
-                send_lora_command(send_command)  # Send the command to LoRa
+        while True:
+            try:
+                read_teensy_data()
+                # Check if there are enough packets to form a batch and send them
+                while len(data_buffer) >= BATCH_SIZE:
+                    send_radio_data()
+                time.sleep(0.1)
+            except Exception as e:
+                print(f"Error in main loop: {e}")
+                time.sleep(0.1)
+    except KeyboardInterrupt:
+        print("Program terminated by user")
+    except Exception as e:
+        print(f"Unexpected error: {e}")
 
-                # Remove the sent packets from the data buffer
-                data_buffer = data_buffer[2:]
-                #print(f"Buffer after send: {data_buffer}")  # Debug line to print buffer after sending
-
-        except Exception as e:  # Catch any exceptions during data processing
-            print(f"Error processing data: {e}")  # Print the error message
-
-    # Add status information
-    #print(f"Status: Packets received={packet_count}, Buffer size={len(data_buffer)}", end='\r')  # Debug line to print status
-
-    time.sleep(0.1)  # Short delay to avoid busy waiting and allow other processes to run
+if __name__ == "__main__":
+    main()
