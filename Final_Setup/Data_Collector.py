@@ -25,7 +25,7 @@ mpu.accelerometer_range = adafruit_mpu6050.Range.RANGE_2_G
 mpu.gyro_range = adafruit_mpu6050.GyroRange.RANGE_250_DPS
 
 # Initialize analog input on a valid analog pin (e.g., A0)
-analog_pin = analogio.AnalogIn(board.A0)
+analog_pin = analogio.AnalogIn(board.A2)
 
 # Initialize UART for communication with Pico
 uart = busio.UART(board.TX1, board.RX1, baudrate=115200)
@@ -68,8 +68,8 @@ def collect_and_send_data():
     # Convert data to JSON and send over serial
     json_data = json.dumps(data_point)
     uart.write(json_data.encode('utf-8') + b'\n')
-    print("Sent data:", json_data)
+    print("Sent data:", json_data.encode('utf-8') + b'\n')
 
 while True:
     collect_and_send_data()
-    time.sleep(0.5)
+    time.sleep(0.3)
