@@ -73,7 +73,7 @@ def collect_and_send_data():
     # Convert to JSON and send
     json_data = json.dumps(data_point)
     uart.write(json_data.encode('utf-8') + b'\n')
-    print(json_data)
+    print(json_data.encode('utf-8') + b'\n')
     # Blink LED twice quickly
     led.value = True
     time.sleep(0.05)
