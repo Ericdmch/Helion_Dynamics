@@ -8,7 +8,6 @@ import adafruit_mpu6050
 import analogio
 from digitalio import DigitalInOut, Direction
 
-
 # Initialize high-speed I2C bus
 i2c = busio.I2C(board.SCL, board.SDA)
 
@@ -26,10 +25,14 @@ mpu.gyro_range = adafruit_mpu6050.GyroRange.RANGE_250_DPS
 
 analog_pin = analogio.AnalogIn(board.A2)
 
-# Initialize UART
+blue_light = DigitalInOut(board.D21)
+blue_light.direction = Direction.OUTPUT
+blue_light.value = True  # Light starts on
+
+# UART used to send data out to another device
 uart = busio.UART(board.TX, board.RX, baudrate=115200)
 
-# Initialize onboard LED
+# Onboard LED
 led = DigitalInOut(board.LED)
 led.direction = Direction.OUTPUT
 
@@ -38,59 +41,74 @@ last_gps_update = time.monotonic()
 latitude = None
 longitude = None
 
-led.value=True
-time.sleep(15)
-led.value=False
-
+led.value = True
+time.sleep(5)
+ground_altitude = bme680.altitude
+led.value = False
 
 def collect_and_send_data():
     timestamp = round(time.monotonic(), 1)
 
     # Sensor readings
     temperature = round(bme680.temperature, 1)
-    pressure = bme680.pressure / 10  # kPa
+    pressure = round(bme680.pressure / 10, 1)  # kPa
+    altitude = bme680.altitude
+    relative_altitude = round(altitude - ground_altitude, 1)
 
     accel_x, accel_y, accel_z = mpu.acceleration
-    accel_x_rounded = round(accel_x, 1)
-    accel_y_rounded = round(accel_y, 1)
-    accel_z_rounded = round(accel_z, 1)
+    accel_x = round(accel_x, 1)
+    accel_y = round(accel_y, 1)
+    accel_z = round(accel_z, 1)
 
     analog_value = analog_pin.value
 
-    # Create data payload
     data_point = [
         timestamp,
         temperature,
         pressure,
-        accel_x_rounded,
-        accel_y_rounded,
-        accel_z_rounded,
+        accel_x,
+        accel_y,
+        accel_z,
         latitude,
         longitude,
-        analog_value
+        analog_value,
+        relative_altitude
     ]
 
-    # Convert to JSON and send
     json_data = json.dumps(data_point)
+
+    # Send via UART
     uart.write(json_data.encode('utf-8') + b'\n')
-    print(json_data.encode('utf-8') + b'\n')
-    # Blink LED twice quickly
+
+    # Print to serial monitor
+    print(f"Data @ {timestamp}s: {json_data}")
+
+    # Blink LED to confirm data was sent
     led.value = True
     time.sleep(0.05)
     led.value = False
 
+    # Control blue light based on altitude
+    if relative_altitude <= 180 and blue_light.value:
+        blue_light.value = False
+        print("🔵 Blue light OFF (below 180m)")
+
+    if relative_altitude <= 5 and not blue_light.value:
+        blue_light.value = True
+        print("🔵 Blue light ON (below 5m)")
 
 while True:
     collect_and_send_data()
 
-    # Update GPS once per second
     current_time = time.monotonic()
     if current_time - last_gps_update >= 1.0:
         gps.update()
         if gps.has_fix:
             latitude = gps.latitude
             longitude = gps.longitude
+            print(f"📍 GPS Fix: lat={latitude}, lon={longitude}")
         else:
+            print("⚠️ No GPS fix")
             latitude = None
             longitude = None
         last_gps_update = current_time
