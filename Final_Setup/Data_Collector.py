@@ -23,6 +23,7 @@ mpu = adafruit_mpu6050.MPU6050(i2c)
 mpu.accelerometer_range = adafruit_mpu6050.Range.RANGE_2_G
 mpu.gyro_range = adafruit_mpu6050.GyroRange.RANGE_250_DPS
 
+
 analog_pin = analogio.AnalogIn(board.A1)
 
 blue_light = DigitalInOut(board.D21)
@@ -51,8 +52,8 @@ def collect_and_send_data():
         timestamp = round(time.monotonic(), 1)
 
         # Sensor readings
-        temperature = round(bme680.temperature, 1)
-        pressure = round(bme680.pressure / 10, 1)  # kPa
+        temperature = round(bme680.temperature, 3)
+        pressure = round(bme680.pressure / 10, 3)  # kPa
         altitude = bme680.altitude
         relative_altitude = round(altitude - ground_altitude, 1)
 
@@ -64,7 +65,7 @@ def collect_and_send_data():
         print(f"\nOS ERROR\n")
 
 
-    analog_value = analog_pin.value
+    analog_value = analog_pin.value-60000
 
     data_point = [
         timestamp,
@@ -95,11 +96,11 @@ def collect_and_send_data():
     # Control blue light based on altitude
     if relative_altitude <= 180 and blue_light.value:
         blue_light.value = False
-        print("️️Blue light OFF (below 180m)")
+        #print("️️Blue light OFF (below 180m)")
 
     if relative_altitude <= 5 and not blue_light.value:
         blue_light.value = True
-        print("🔵 Blue light ON (below 5m)")
+        #print("🔵 Blue light ON (below 5m)")
 
 while True:
     collect_and_send_data()
@@ -110,9 +111,9 @@ while True:
         if gps.has_fix:
             latitude = gps.latitude
             longitude = gps.longitude
-            print(f"📍 GPS Fix: lat={latitude}, lon={longitude}")
+            #print(f"📍 GPS Fix: lat={latitude}, lon={longitude}")
         else:
-            print("⚠️ No GPS fix")
+            #print("⚠️ No GPS fix")
             latitude = None
             longitude = None
         last_gps_update = current_time
