@@ -23,7 +23,7 @@ mpu = adafruit_mpu6050.MPU6050(i2c)
 mpu.accelerometer_range = adafruit_mpu6050.Range.RANGE_2_G
 mpu.gyro_range = adafruit_mpu6050.GyroRange.RANGE_250_DPS
 
-analog_pin = analogio.AnalogIn(board.A2)
+analog_pin = analogio.AnalogIn(board.A1)
 
 blue_light = DigitalInOut(board.D21)
 blue_light.direction = Direction.OUTPUT
@@ -47,18 +47,22 @@ ground_altitude = bme680.altitude
 led.value = False
 
 def collect_and_send_data():
-    timestamp = round(time.monotonic(), 1)
+    try:
+        timestamp = round(time.monotonic(), 1)
 
-    # Sensor readings
-    temperature = round(bme680.temperature, 1)
-    pressure = round(bme680.pressure / 10, 1)  # kPa
-    altitude = bme680.altitude
-    relative_altitude = round(altitude - ground_altitude, 1)
+        # Sensor readings
+        temperature = round(bme680.temperature, 1)
+        pressure = round(bme680.pressure / 10, 1)  # kPa
+        altitude = bme680.altitude
+        relative_altitude = round(altitude - ground_altitude, 1)
 
-    accel_x, accel_y, accel_z = mpu.acceleration
-    accel_x = round(accel_x, 1)
-    accel_y = round(accel_y, 1)
-    accel_z = round(accel_z, 1)
+        accel_x, accel_y, accel_z = mpu.acceleration
+        accel_x = round(accel_x, 1)
+        accel_y = round(accel_y, 1)
+        accel_z = round(accel_z, 1)
+    except:
+        print(f"\nOS ERROR\n")
+
 
     analog_value = analog_pin.value
 
@@ -91,7 +95,7 @@ def collect_and_send_data():
     # Control blue light based on altitude
     if relative_altitude <= 180 and blue_light.value:
         blue_light.value = False
-        print("🔵 Blue light OFF (below 180m)")
+        print("️️Blue light OFF (below 180m)")
 
     if relative_altitude <= 5 and not blue_light.value:
         blue_light.value = True

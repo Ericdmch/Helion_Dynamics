@@ -112,15 +112,16 @@ while True:
 
                 # Send data over LoRa UART
                 lora_uart.write(message.encode('utf-8') + b'\n')
-                print(f"Sent to LoRa: {message[:10]}")
+                print(f"Sent to LoRa: {message}")
 
                 # Add small delay between transmissions
                 time.sleep(0.25)
             except Exception as e:
                 print(f"Error processing data: {e}")
         else:
-            print("No data available on UART0", end='\r')
-            time.sleep(0.1)
+            #print("No data available on UART0", end='\r')
+            lora_uart.write("NO Data!")
+            time.sleep(0.5)
     except Exception as e:
         print(f"General exception in main loop: {e}")
         time.sleep(1)
