@@ -44,97 +44,109 @@ fig, axs = plt.subplots(5, 2, figsize=(15, 12))
 fig.tight_layout(pad=3.0)
 
 def update(frame):
-    line = ser.readline().decode('utf-8', errors='ignore').strip()
-    if not line or not line.startswith('['):
-        print(f"⚠️  Skipped non-JSON line: {line}")
-        return
-
     try:
-        data = json.loads(line)
-        if len(data) != 10:
-            raise ValueError("wrong length")
+        line = ser.readline().decode('utf-8').strip()
+        # Replace None with null for valid JSON
+        line = line.replace("None", "null")
 
-        ts, raw_temp, pressure, Ax, Ay, Az, lat, lon, fluor, rel_alt = data
-        # Apply user-specified offset
-        temp_calibrated = raw_temp + temp_offset
-        axyz = np.sqrt(Ax**2 + Ay**2 + Az**2)
+        # Fill missing lat/lon with 0.0
+        line = line.replace("null", "0.0", 2)  # Replace the first two 'null' (lat and lon)
 
-        # Append to plotting buffers
-        time_data.append(ts)
-        temp_data.append(temp_calibrated)
-        press_data.append(pressure)
-        ax_data.append(Ax); ay_data.append(Ay); az_data.append(Az)
-        axyz_data.append(axyz)
-        lat_data.append(lat); lon_data.append(lon)
-        reading_data.append(fluor)
-        rel_alt_data.append(rel_alt)
+        if not line or not line.startswith('['):
+            print(f"⚠️  Skipped non-JSON line: {line}")
+            return
 
-        # Log into our record list\ n
-        records.append({
-            'timestamp': ts,
-            'temperature': temp_calibrated,
-            'pressure': pressure,
-            'Ax': Ax,
-            'Ay': Ay,
-            'Az': Az,
-            'Axyz': axyz,
-            'latitude': lat,
-            'longitude': lon,
-            'fluorometer': fluor,
-            'rel_altitude': rel_alt
-        })
+        try:
+            data = json.loads(line)
+            if len(data) != 10:
+                raise ValueError("wrong length")
 
-        # --- redraw each axis ---
-        axs[0, 0].cla()
-        axs[0, 0].plot(time_data, temp_data)
-        axs[0, 0].set_title("Temperature vs Time")
+            ts, raw_temp, pressure, Ax, Ay, Az, lat, lon, fluor, rel_alt = data
+            # Apply user-specified offset
+            temp_calibrated = raw_temp + temp_offset
+            axyz = np.sqrt(Ax**2 + Ay**2 + Az**2)
 
-        axs[0, 1].cla()
-        axs[0, 1].plot(time_data, press_data)
-        axs[0, 1].set_title("Pressure vs Time")
+            # Append to plotting buffers
+            time_data.append(ts)
+            temp_data.append(temp_calibrated)
+            press_data.append(pressure)
+            ax_data.append(Ax); ay_data.append(Ay); az_data.append(Az)
+            axyz_data.append(axyz)
+            lat_data.append(lat); lon_data.append(lon)
+            reading_data.append(fluor)
+            rel_alt_data.append(rel_alt)
 
-        axs[1, 0].cla()
-        axs[1, 0].plot(time_data, ax_data, label='Ax')
-        axs[1, 0].plot(time_data, ay_data, label='Ay')
-        axs[1, 0].plot(time_data, az_data, label='Az')
-        axs[1, 0].set_title("Ax, Ay, Az vs Time")
-        axs[1, 0].legend()
+            # Log into our record list\ n        
+            records.append({
+                'timestamp': ts,
+                'temperature': temp_calibrated,
+                'pressure': pressure,
+                'Ax': Ax,
+                'Ay': Ay,
+                'Az': Az,
+                'Axyz': axyz,
+                'latitude': lat,
+                'longitude': lon,
+                'fluorometer': fluor,
+                'rel_altitude': rel_alt
+            })
 
-        axs[1, 1].cla()
-        axs[1, 1].plot(time_data, axyz_data)
-        axs[1, 1].set_title("Axyz vs Time")
+            # --- redraw each axis ---
+            axs[0, 0].cla()
+            axs[0, 0].plot(time_data, temp_data)
+            axs[0, 0].set_title("Temperature vs Time")
 
-        axs[2, 0].cla()
-        axs[2, 0].plot(time_data, reading_data)
-        axs[2, 0].set_title("Fluorometer vs Time")
+            axs[0, 1].cla()
+            axs[0, 1].plot(time_data, press_data)
+            axs[0, 1].set_title("Pressure vs Time")
 
-        axs[2, 1].cla()
-        axs[2, 1].plot(time_data, rel_alt_data)
-        axs[2, 1].set_title("Relative Altitude vs Time")
+            axs[1, 0].cla()
+            axs[1, 0].plot(time_data, ax_data, label='Ax')
+            axs[1, 0].plot(time_data, ay_data, label='Ay')
+            axs[1, 0].plot(time_data, az_data, label='Az')
+            axs[1, 0].set_title("Ax, Ay, Az vs Time")
+            axs[1, 0].legend()
 
-        axs[3, 0].cla()
-        axs[3, 0].plot(lon_data, lat_data)
-        axs[3, 0].set_title("Longitude vs Latitude")
+            axs[1, 1].cla()
+            axs[1, 1].plot(time_data, axyz_data)
+            axs[1, 1].set_title("Axyz vs Time")
 
-        axs[3, 1].cla()
-        axs[3, 1].plot(rel_alt_data, reading_data)
-        axs[3, 1].set_title("Fluorometer vs Relative Altitude")
+            axs[2, 0].cla()
+            axs[2, 0].plot(time_data, reading_data)
+            axs[2, 0].set_title("Fluorometer vs Time")
 
-        axs[4, 0].cla()
-        axs[4, 0].plot(temp_data, reading_data)
-        axs[4, 0].set_title("Fluorometer vs Temperature")
+            axs[2, 1].cla()
+            axs[2, 1].plot(time_data, rel_alt_data)
+            axs[2, 1].set_title("Relative Altitude vs Time")
 
-        axs[4, 1].cla()
-        axs[4, 1].plot(press_data, reading_data)
-        axs[4, 1].set_title("Fluorometer vs Pressure")
+            axs[3, 0].cla()
+            axs[3, 0].plot(lon_data, lat_data)
+            axs[3, 0].set_title("Longitude vs Latitude")
 
-        print(f"✅ Successful update : {line}")
+            axs[3, 1].cla()
+            axs[3, 1].plot(rel_alt_data, reading_data)
+            axs[3, 1].set_title("Fluorometer vs Relative Altitude")
 
-    except json.JSONDecodeError:
-        print(f"⚠️  Skipped non-JSON line: {line}")
-    except ValueError as e:
-        print(f"⚠️  Skipped invalid data ({e}): {line}")
+            axs[4, 0].cla()
+            axs[4, 0].plot(temp_data, reading_data)
+            axs[4, 0].set_title("Fluorometer vs Temperature")
 
+            axs[4, 1].cla()
+            axs[4, 1].plot(press_data, reading_data)
+            axs[4, 1].set_title("Fluorometer vs Pressure")
+
+            print(f"✅ Successful update : {line}")
+
+        except json.JSONDecodeError:
+            print(f"⚠️  Skipped non-JSON line: {line}")
+            pass
+        except ValueError as e:
+            print(f"⚠️  Skipped invalid data ({e}): {line}")
+            pass
+
+    except:
+        print("Failure")
+    
 # Animate
 ani = animation.FuncAnimation(fig, update, interval=500)
 
@@ -154,14 +166,3 @@ if confirm in ('y', 'yes'):
         print("\n⚠️  No records to save.")
 else:
     print("\n❌ Exit canceled. Data not saved.")
-
-
-
-
-
-
-# BLESS THE LORD
-# BLESS THE LORD
-# BLESS THE LORD
-# BLESS THE LORD
-# BLESS THE LORD

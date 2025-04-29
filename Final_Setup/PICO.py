@@ -55,8 +55,8 @@ def configure_lora():
         return False
     time.sleep(0.5)
 
-    if not send_at_command("AT+SF6", "OK"):  # Set Spreading Factor to 6 (SF6)
-        print("Failed to set Spreading Factor to 6")
+    if not send_at_command("AT+SF8", "OK"):  # Set Spreading Factor to 8 (SF6)
+        print("Failed to set Spreading Factor to 8")
         return False
     time.sleep(0.5)
 
@@ -92,36 +92,37 @@ while True:
     try:
         # Check for incoming data
         if data_uart.in_waiting:
-            print("Data available on UART0")
+            #print("Data available on UART0")
             try:
                 # Read a line of data
                 data_line = data_uart.readline().decode().strip()
-                print(f"Raw data received: {data_line}")
+                #print(f"Raw data received: {data_line}")
 
                 # Parse JSON data
                 try:
                     data_point = json.loads(data_line)
-                    print(f"Parsed data: {data_point}")
+                    #print(f"Parsed data: {data_point}")
                 except Exception as e:
-                    print(f"JSON parsing error: {e}")
+                    #print(f"JSON parsing error: {e}")
                     continue
 
                 # Prepare message as JSON
                 message = json.dumps(data_point)
-                print(f"Prepared message: {message}")
+                #print(f"Prepared message: {message}")
 
                 # Send data over LoRa UART
                 lora_uart.write(message.encode('utf-8') + b'\n')
-                print(f"Sent to LoRa: {message}")
+                #print(f"Sent to LoRa: {message}")
 
                 # Add small delay between transmissions
-                time.sleep(0.25)
+                time.sleep(0.05)
             except Exception as e:
                 print(f"Error processing data: {e}")
+
         else:
             #print("No data available on UART0", end='\r')
-            lora_uart.write("NO Data!")
-            time.sleep(0.5)
+            #lora_uart.write("NO Data!")
+            time.sleep(0.1)
     except Exception as e:
         print(f"General exception in main loop: {e}")
         time.sleep(1)

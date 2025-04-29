@@ -104,14 +104,10 @@ def process_data(raw):
             datasets = [data]
 
         for dataset in datasets:
-            # turn your dataset back into a JSON line
-            msg = json.dumps(dataset)
-
             if pc_uart:
-                # send it once
-                pc_uart.write((msg + "\n").encode("utf-8"))
-                # now just print the JSON, not the return-value of write()
-                print(msg)
+                pc_uart.write((json.dumps(dataset) + "\n").encode("utf-8"))
+                print("sent through uart to computer")
+
             timestamp = dataset[0]
             temp = dataset[1] - 5.0
             pressure = dataset[2]
@@ -185,19 +181,18 @@ if not configure_lora():
 
 # ---- Main loop ----
 
-test_mode = False     # manual JSON input
-random_mode = True  # random data generator
+test_mode = True     # manual JSON input
+random_mode = False  # random data generator
 
 while True:
     if test_mode:
         raw = input("Enter sample JSON data: ").strip()
         if raw:
             process_data(raw)
-            print(raw)
     elif random_mode:
         random_data = generate_random_data()
         raw = json.dumps(random_data)
-        print(raw)
+        print("Generated random data:", raw)
         process_data(raw)
         time.sleep(1.0)  # slow down so it's readable
     else:
