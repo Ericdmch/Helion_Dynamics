@@ -132,6 +132,7 @@ def process_data(raw):
         display_message(display, "Invalid JSON")
         print(f"Invalid JSON format: {e}")
 
+#Debugging
 def generate_random_data():
     dataset = [
         round(random.uniform(400, 500), 1),  # timestamp
@@ -181,7 +182,7 @@ if not configure_lora():
 
 # ---- Main loop ----
 
-test_mode = True     # manual JSON input
+test_mode = False     # manual JSON input
 random_mode = False  # random data generator
 
 while True:
