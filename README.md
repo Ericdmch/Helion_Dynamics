@@ -52,8 +52,8 @@ The CanSat is composed of several subsystems:
 
 - **Microcontroller**: Raspberry Pi Pico, Teensy 4.0
 - **Sensors**: Adafruit BME680 (pressure, temperature, humidity, gas sensor), GPS PA1010D
-- **Power Source**: LiPo battery 3.7V, 9V Baattery
-- **Communication**: LoRa communication module for real-time data transmission
+- **Power Source**: LiPo battery 3.7V, 9V Battery
+- **Communication**: LoRa communication module for real-time data transmission, DX-LR02
 - **Descent System**: Custom-designed parachute for controlled descent
 
 ## Data Collection & Analysis
