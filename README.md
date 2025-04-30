@@ -19,7 +19,7 @@ Welcome to our repository for the **CanSat Challenge 2025**. This project aims t
 
 Our CanSat will be launched from a rocket and descend via parachute, collecting data on its environment, including temperature, pressure, altitude, and location. We aim to achieve a smooth descent while transmitting real-time data to our ground station. 
 
-Our secondary mission, in short, is to test the stress response of algae due to the affects of g-force, temperature and pressure.
+Our secondary mission, in short, is to quantify the stress response of algae due to the affects of g-force, temperature and pressure, as it ascends in a rocket and descends onto exterrestial planets for space missions.
 
 ### Objectives:
 - Accurately measure altitude, temperature, and pressure.
