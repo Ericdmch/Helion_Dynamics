@@ -29,15 +29,15 @@ Our secondary mission, in short, is to test the stress response of algae due to 
 
 ## Team Members
 
-- **Eric Chen** - Mechanical Designer
+- **Eric Chen** - Mechanical Engineer
 
-- **Emerson Yu** - Electronics and Code Designer
+- **Emerson Yu** - Electronics and Software Engineer
 
 - **Laura Wang** - Team Manager
 
-- **Felix Chen** - Coder 
+- **Felix Chen** - Head of Outreach 
 
-- **Abigail Wang** - Head Outreach and Community Engagement
+- **Abigail Wang** - Head of Mission Research
 
 ## System Architecture
 
