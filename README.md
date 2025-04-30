@@ -44,13 +44,13 @@ The CanSat is composed of several subsystems:
 - **Power System**: Provides energy to all onboard components.
 - **Sensor System**: Collects environmental data such as pressure, temperature, and altitude using a variety of sensors (e.g., BME680, GPS).
 - **Communication System**: A LoRa-based system is used to transmit data in real-time to the ground station.
-- **Descent System**: Includes a parachute for controlled descent and an impact absorption mechanism.
+- **Descent System**: Includes a parachute for controlled descent.
 
 ## Components
 
-- **Microcontroller**: iLabs RP2040 Challenger LoRa
-- **Sensors**: Adafruit BME680 (pressure, temperature, humidity, gas sensor), GPS sensor
-- **Power Source**: LiPo battery
+- **Microcontroller**: Raspberry Pi Pico, Teensy 4.0
+- **Sensors**: Adafruit BME680 (pressure, temperature, humidity, gas sensor), GPS PA1010D
+- **Power Source**: LiPo battery 3.7V, 9V Baattery
 - **Communication**: LoRa communication module for real-time data transmission
 - **Descent System**: Custom-designed parachute for controlled descent
 
@@ -58,10 +58,10 @@ The CanSat is composed of several subsystems:
 
 The data collected by the CanSat will include:
 
-- **Altitude**: Measured using barometric pressure.
 - **Temperature**: Recorded throughout the descent.
 - **Pressure**: Atmospheric pressure data to correlate with altitude.
 - **GPS Coordinates**: Used to track the descent path.
+- **Fluorometer Data**: Measurement of stress upon algae
 
 The data will be processed and analyzed to determine the CanSat’s performance and environmental conditions during the flight.
 
@@ -83,5 +83,5 @@ To set up the software on your local machine:
 
 **Important Source Links**
 
-[iLabs rp2040 LoRa Mainboard Datasheet](https://ilabs.se/challenger-rp2040-lora-datasheet/)
+[OPEN-JIP](https://github.com/HarveyBates/Open-JIP)
 
