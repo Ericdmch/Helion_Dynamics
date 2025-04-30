@@ -11,8 +11,7 @@ Welcome to our repository for the **CanSat Challenge 2025**. This project aims t
 5. [Data Collection & Analysis](#data-collection--analysis)
 6. [Launch and Testing Plan](#launch-and-testing-plan)
 7. [Installation](#installation)
-8. [Usage](#usage)
-9. [Contributing](#contributing)
+
 
 ---
 
