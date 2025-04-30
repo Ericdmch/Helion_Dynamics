@@ -6,11 +6,10 @@ Welcome to our repository for the **CanSat Challenge 2025**. This project aims t
 
 1. [Project Overview](#project-overview)
 2. [Team Members](#team-members)
-3. [System Architecture](#system-architecture)
-4. [Components](#components)
-5. [Data Collection & Analysis](#data-collection--analysis)
-6. [Launch and Testing Plan](#launch-and-testing-plan)
-7. [Installation](#installation)
+3. [Components](#components)
+4. [Data Collection & Analysis](#data-collection--analysis)
+5. [Launch and Testing Plan](#launch-and-testing-plan)
+6. [Installation](#installation)
 
 
 ---
@@ -37,15 +36,6 @@ Our secondary mission, in short, is to quantify the stress response of algae due
 - **Felix Chen** - Head of Outreach 
 
 - **Abigail Wang** - Head of Mission Research
-
-## System Architecture
-
-The CanSat is composed of several subsystems:
-
-- **Power System**: Provides energy to all onboard components.
-- **Sensor System**: Collects environmental data such as pressure, temperature, and altitude using a variety of sensors (e.g., BME680, GPS).
-- **Communication System**: A LoRa-based system is used to transmit data in real-time to the ground station.
-- **Descent System**: Includes a parachute for controlled descent.
 
 ## Components
 
