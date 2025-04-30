@@ -1,6 +1,3 @@
-# SPDX-FileCopyrightText: 2025 xAI
-# SPDX-License-Identifier: MIT
-
 import board
 import busio
 import time
