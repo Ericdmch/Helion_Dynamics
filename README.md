@@ -69,8 +69,8 @@ To set up the software on your local machine:
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourteam/cansat-challenge-2025.git
-   cd cansat-challenge-2025
+   git clone https://github.com/Ericdmch/Helion_Dynamics.git
+   cd Helion_Dynamics
 
 **Important Source Links**
 
